@@ -2,161 +2,147 @@
   <img src="./.github/assets/livekit-mark.png" alt="LiveKit logo" width="100" height="100">
 </a>
 
-# LiveKit Agents Starter - Python
+# VoicePay — Voice Payment Assistant
 
-A complete starter project for building voice AI apps with [LiveKit Agents for Python](https://github.com/livekit/agents) and [LiveKit Cloud](https://cloud.livekit.io/).
+A voice AI agent that lets you manage payments through natural conversation, powered by [LiveKit Agents](https://github.com/livekit/agents) and [Razorpay](https://razorpay.com/).
 
-The starter project includes:
+Talk to VoicePay to:
+- **Create payment links** — collect money from customers via SMS or email
+- **Check payment status** — look up any payment's details
+- **View transaction history** — see recent payments and settlements
+- **Process refunds** — initiate refunds with confirmation safeguards
+- **Manage orders** — create and track orders
 
-- A simple voice AI assistant, ready for extension and customization
-- A voice AI pipeline built on [LiveKit Inference](https://docs.livekit.io/agents/models/inference), providing zero-configuration access to [models](https://docs.livekit.io/agents/models) from top labs
-  - Uses the fast, open-weight Gemma 4 31B model, [hosted by LiveKit](https://docs.livekit.io/agents/models/llm/livekit/) and tuned for optimal performance in voice AI, as the default LLM
-  - Uses Fish Audio S2.1 Pro for TTS, which renders the inline delivery markup that expressive mode relies on
-  - Supports more than 50 models from OpenAI, Cartesia, Deepgram, and other providers
-  - Access to a wide range of other models, including [Realtime models](https://docs.livekit.io/agents/models/realtime), through extensive plugin ecosystem
-- Expressive mode, enabled by default: the framework injects the TTS provider's markup guide into the LLM prompt, so the model emits inline delivery tags (emotion, pacing, non-verbal sounds) that the TTS renders and the transcript never shows
-- Eval suite based on the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/)
-- [LiveKit Turn Detector](https://docs.livekit.io/agents/logic/turns/turn-detector/), an end-of-turn model that listens to the user's audio directly, combining semantic understanding with acoustic cues for state-of-the-art accuracy across 14 languages
-- [Background voice cancellation](https://docs.livekit.io/transport/media/noise-cancellation/)
-- Deep session insights from LiveKit [Agent Observability](https://docs.livekit.io/deploy/observability/)
-- A Dockerfile ready for [production deployment to LiveKit Cloud](https://docs.livekit.io/deploy/agents/)
+Built on:
+- [LiveKit Cloud](https://cloud.livekit.io/) for real-time voice infrastructure
+- [LiveKit Inference](https://docs.livekit.io/agents/models/inference) for AI models (STT, LLM, TTS)
+- [Razorpay MCP Server](https://github.com/razorpay/razorpay-mcp-server) for payment operations via Model Context Protocol
 
-This starter app is compatible with any [custom web/mobile frontend](https://docs.livekit.io/frontends/) or [telephony](https://docs.livekit.io/telephony/).
+## Quick Start
 
-## Using coding agents
+### Prerequisites
 
-This project is designed to work with coding agents like [Claude Code](https://claude.com/product/claude-code), [Cursor](https://www.cursor.com/), and [Codex](https://openai.com/codex/).
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/) package manager
+- A [LiveKit Cloud](https://cloud.livekit.io/) account
+- A [Razorpay](https://razorpay.com/) account with API access
 
-For your convenience, LiveKit offers both a CLI and an [MCP server](https://docs.livekit.io/reference/developer-tools/docs-mcp/) that can be used to browse and search its documentation. The [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/) (`lk docs`) works with any coding agent that can run shell commands. Install it for your platform:
-
-**macOS:**
+### 1. Install dependencies
 
 ```console
-brew install livekit-cli
-```
-
-**Linux:**
-
-```console
-curl -sSL https://get.livekit.io/cli | bash
-```
-
-**Windows:**
-
-```console
-winget install LiveKit.LiveKitCLI
-```
-
-The `lk docs` subcommand requires version 2.15.0 or higher. Check your version with `lk --version` and update if needed. Once installed, your coding agent can search and browse LiveKit documentation directly from the terminal:
-
-```console
-lk docs search "voice agents"
-lk docs get-page /agents/start/voice-ai-quickstart
-```
-
-See the [Using coding agents](https://docs.livekit.io/intro/coding-agents/) guide for more details, including MCP server setup.
-
-The project includes a complete [AGENTS.md](AGENTS.md) file for these assistants. You can modify this file to suit your needs. To learn more about this file, see [https://agents.md](https://agents.md).
-
-## Dev Setup
-
-Create a project from this template with the LiveKit CLI (recommended):
-
-```bash
-lk cloud auth
-lk agent init my-agent --template agent-starter-python
-```
-
-The CLI clones the template and configures your environment. Then follow the rest of this guide from [Run the agent](#run-the-agent).
-
-<details>
-<summary>Alternative: Manual setup without the CLI</summary>
-
-Clone the repository and install dependencies to a virtual environment:
-
-```console
-cd agent-starter-python
 uv sync
 ```
 
-Sign up for [LiveKit Cloud](https://cloud.livekit.io/) then set up the environment by copying `.env.example` to `.env.local` and filling in the required keys:
+### 2. Configure environment
 
-- `LIVEKIT_URL`
-- `LIVEKIT_API_KEY`
-- `LIVEKIT_API_SECRET`
-
-You can load the LiveKit environment automatically using the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
+Copy `.env.example` to `.env.local` and fill in your credentials:
 
 ```bash
-lk cloud auth
-lk app env --write --destination .env.local
+# LiveKit Cloud credentials (from cloud.livekit.io)
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your-api-key
+LIVEKIT_API_SECRET=your-api-secret
+
+# Razorpay MCP token (Base64-encoded key_id:key_secret)
+RAZORPAY_MCP_TOKEN=your-base64-token
 ```
 
-</details>
+**Generate your Razorpay MCP token:**
 
-## Run the agent
+1. Log in to your [Razorpay Dashboard](https://razorpay.com/) → Account & Settings → API Keys
+2. Generate (or copy) your Key ID and Key Secret
+3. Encode them:
+   ```bash
+   echo -n "rzp_test_YOUR_KEY_ID:YOUR_KEY_SECRET" | base64
+   ```
+4. Paste the output as `RAZORPAY_MCP_TOKEN` in `.env.local`
 
-Run this command to speak to your agent directly in your terminal:
+> **Note:** Use Test Mode keys (`rzp_test_...`) for development. No real money will be transacted.
+
+### 3. Run the agent
+
+**Talk directly in your terminal:**
 
 ```console
 uv run python src/agent.py console
 ```
 
-To run the agent for use with a frontend or telephony, use the `dev` command:
+**Run for use with a frontend or telephony:**
 
 ```console
 uv run python src/agent.py dev
 ```
 
-In production, use the `start` command:
+**Production:**
 
 ```console
 uv run python src/agent.py start
 ```
 
-## Frontend & Telephony
+## Example Conversations
 
-Get started quickly with our pre-built frontend starter apps, or add telephony support:
+> **You:** "I need to collect five hundred rupees from Rahul."
+>
+> **VoicePay:** "Sure! I'll create a payment link for five hundred rupees. What's Rahul's email address or phone number?"
+>
+> **You:** "His email is rahul@example.com."
+>
+> **VoicePay:** "Got it. Just to confirm — a payment link for five hundred rupees to Rahul at rahul@example.com. Shall I go ahead?"
+>
+> **You:** "Yes, send it."
+>
+> **VoicePay:** "Done! The payment link has been sent to Rahul's email. He'll receive it shortly."
 
-| Platform | Link | Description |
-|----------|----------|-------------|
-| **Web** | [`livekit-examples/agent-starter-react`](https://github.com/livekit-examples/agent-starter-react) | Web voice AI assistant with React & Next.js |
-| **iOS/macOS** | [`livekit-examples/agent-starter-swift`](https://github.com/livekit-examples/agent-starter-swift) | Native iOS, macOS, and visionOS voice AI assistant |
-| **Flutter** | [`livekit-examples/agent-starter-flutter`](https://github.com/livekit-examples/agent-starter-flutter) | Cross-platform voice AI assistant app |
-| **React Native** | [`livekit-examples/voice-assistant-react-native`](https://github.com/livekit-examples/voice-assistant-react-native) | Native mobile app with React Native & Expo |
-| **Android** | [`livekit-examples/agent-starter-android`](https://github.com/livekit-examples/agent-starter-android) | Native Android app with Kotlin & Jetpack Compose |
-| **Web Embed** | [`livekit-examples/agent-starter-embed`](https://github.com/livekit-examples/agent-starter-embed) | Voice AI widget for any website |
-| **Telephony** | [Documentation](https://docs.livekit.io/telephony/) | Add inbound or outbound calling to your agent |
+## Architecture
 
-For advanced customization, see the [complete frontend guide](https://docs.livekit.io/frontends/).
+```
+┌─────────────┐     ┌──────────────────────┐     ┌────────────────────┐
+│   User      │◄───►│   LiveKit Cloud      │◄───►│   VoicePay Agent   │
+│   (Voice)   │     │   (WebRTC/SIP)       │     │                    │
+└─────────────┘     └──────────────────────┘     │  STT → LLM → TTS  │
+                                                  │        │           │
+                                                  │   MCPToolset       │
+                                                  │        │           │
+                                                  └────────┼───────────┘
+                                                           │
+                                                  ┌────────▼───────────┐
+                                                  │  Razorpay MCP      │
+                                                  │  Server (Remote)   │
+                                                  │                    │
+                                                  │  35+ payment tools │
+                                                  └────────────────────┘
+```
 
-## Tests and evals
+## Testing
 
-Simulations run full multi-turn conversations between a simulated user and your agent on LiveKit Cloud, then judge each transcript. The scenarios live in [`scenarios.yaml`](scenarios.yaml). Run them locally with the [LiveKit CLI](https://docs.livekit.io/intro/basics/cli/):
+### In-process tests
+
+```console
+uv run pytest tests/test_agent.py -v
+```
+
+### Simulation scenarios
+
+Full multi-turn conversations against the live agent:
 
 ```console
 lk agent simulate --scenarios scenarios.yaml
 ```
 
-The `Simulations` workflow in `.github/workflows/simulations.yml` runs the same file on every merge to `main` and on demand from the Actions tab. It runs there rather than on every pull request push because each run spends real inference. See the [simulations guide](https://docs.livekit.io/agents/start/testing/simulations/) for how to write scenarios and read results.
+## Frontend & Telephony
 
-For turn-level checks that don't need a live session, the LiveKit Agents [testing & evaluation framework](https://docs.livekit.io/agents/start/testing/) runs your agent in-process under `pytest`. A commented-out example lives in [`tests/test_agent.py`](tests/test_agent.py).
+Connect any LiveKit frontend to VoicePay:
 
-## Using this template repo for your own project
+| Platform | Link |
+|----------|------|
+| **Web** | [`livekit-examples/agent-starter-react`](https://github.com/livekit-examples/agent-starter-react) |
+| **iOS/macOS** | [`livekit-examples/agent-starter-swift`](https://github.com/livekit-examples/agent-starter-swift) |
+| **Flutter** | [`livekit-examples/agent-starter-flutter`](https://github.com/livekit-examples/agent-starter-flutter) |
+| **Telephony** | [Documentation](https://docs.livekit.io/telephony/) |
 
-Once you've started your own project based on this repo, you should:
+## Deploying to Production
 
-1. **Check in your `uv.lock`**: This file is currently untracked for the template, but you should commit it to your repository for reproducible builds and proper configuration management. (The same applies to `livekit.toml`, if you run your agents in LiveKit Cloud)
-
-2. **Add your own repository secrets**: You must [add secrets](https://docs.github.com/en/actions/how-tos/writing-workflows/choosing-what-your-workflow-does/using-secrets-in-github-actions) for `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` so that the simulations can run in CI.
-
-## Deploying to production
-
-This project is production-ready and includes a working `Dockerfile`. To deploy it to LiveKit Cloud or another environment, see the [deploying to production](https://docs.livekit.io/deploy/agents/) guide.
-
-## Self-hosted LiveKit
-
-You can also self-host LiveKit instead of using LiveKit Cloud. See the [self-hosting](https://docs.livekit.io/transport/self-hosting/local/) guide for more information. If you choose to self-host, you'll need to also use [model plugins](https://docs.livekit.io/agents/models/#plugins) instead of LiveKit Inference and will need to remove the [LiveKit Cloud noise cancellation](https://docs.livekit.io/transport/media/noise-cancellation/) plugin.
+This project includes a `Dockerfile` ready for deployment. See the [LiveKit deployment guide](https://docs.livekit.io/deploy/agents/).
 
 ## License
 
