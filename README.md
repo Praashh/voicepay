@@ -66,7 +66,11 @@ uv run python src/agent.py start
 
 ## Demo Conversations
 
-<video src="./voicepay.mp4" controls width="100%"></video>
+
+
+https://github.com/user-attachments/assets/3b29a1cf-993a-4ea1-bc9e-064cbb367514
+
+
 
 ## Architecture
 
