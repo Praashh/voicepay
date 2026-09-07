@@ -66,7 +66,7 @@ uv run python src/agent.py start
 
 ## Demo Conversations
 
-<video src="https://github.com/Praashh/voicepay/raw/master/Voicepay.mp4" controls width="100%"></video>
+<video src="./voicepay.mp4" controls width="100%"></video>
 
 ## Architecture
 
